@@ -1,0 +1,123 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model ServiceProvider {
+  id           String    @id @default(cuid())
+  name         String    @unique
+  description  String?
+  pricePerUser Float?
+  image        String
+  customers    Company[]
+  endUsers     EndUser[]
+  sessions     Session[]
+  teams        Team[]
+}
+
+model Company {
+  id               String            @id @default(cuid())
+  name             String            @unique
+  serviceProviders ServiceProvider[]
+  endUsers         EndUser[]
+  PortalUser       PortalUser[]
+  teams            Team[]
+}
+
+model EndUser {
+  id               String            @id @default(cuid())
+  firstName        String
+  lastName         String
+  personalNumber   String            @unique
+  company          Company           @relation(fields: [companyId], references: [id])
+  companyId        String
+  serviceProviders ServiceProvider[]
+  sessions         Session[]
+  role             Role              @default(USER)
+  createdAt        DateTime?         @default(now())
+  terminationDate  DateTime?
+  teams            Team[]
+}
+
+model Team {
+  id               String            @id @default(cuid())
+  name             String            @unique
+  users            EndUser[]
+  serviceProviders ServiceProvider[]
+  Company          Company?          @relation(fields: [companyName], references: [name])
+  companyName      String?
+}
+
+model Session {
+  id                  Int             @id @default(autoincrement())
+  token               String          @unique
+  createdAt           DateTime        @default(now())
+  expiresAt           DateTime
+  user                EndUser         @relation(fields: [personalNumber], references: [personalNumber])
+  personalNumber      String
+  status              Status          @default(ACTIVE)
+  ServiceProvider     ServiceProvider @relation(fields: [serviceProviderName], references: [name])
+  serviceProviderName String
+  device              String
+  geo                 Geo?
+  geoId               Int?
+}
+
+enum Role {
+  USER
+  ADMIN
+  SUPERADMIN
+}
+
+enum Status {
+  ACTIVE
+  INACTIVE
+}
+
+model Geo {
+  id        Int     @id @default(autoincrement())
+  city      String?
+  country   String?
+  region    String?
+  latitude  String?
+  longitude String?
+  session   Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sessionId Int     @unique
+}
+
+// --------------------------------------------------------------------------------------------------------------------
+// ------------ PORTAL STUFF BELOW ------------------------------------------------------------------------------------
+
+model PortalAccount {
+  id           String      @id @default(cuid())
+  username     String      @unique
+  password     Password?
+  user         PortalUser?
+  portalUserId String      @unique
+}
+
+model Password {
+  id        Int           @id @default(autoincrement())
+  hash      String
+  account   PortalAccount @relation(fields: [accountId], references: [id])
+  accountId String        @unique
+}
+
+model PortalUser {
+  id          String        @id @default(cuid())
+  name        String
+  email       String
+  image       String
+  role        Role
+  account     PortalAccount @relation(fields: [accountId], references: [id])
+  accountId   String        @unique
+  company     Company       @relation(fields: [companyName], references: [name])
+  companyName String
+}

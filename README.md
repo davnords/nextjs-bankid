@@ -1,3 +1,5 @@
+# NextJS BankID
+
 This is a simple [Next.js](https://nextjs.org/) project showing you how to integrate BankID authentication to your app. I have included test certificates in the `cert` folder but I advise you to go to the [BankID Developer Website](https://developers.bankid.com/) and get your own certificates. 
 
 ## Getting Started
